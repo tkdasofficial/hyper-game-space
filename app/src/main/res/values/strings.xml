@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Hyper Game Space</string>
+    <string name="accessibility_desc">Hyper Game Space uses accessibility features to optimize device performance and detect running games.</string>
+</resources>
