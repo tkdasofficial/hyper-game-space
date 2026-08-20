@@ -63,6 +63,6 @@
             android:screenOrientation="landscape"
             android:theme="@style/Theme.MyApplication">
         </activity>
-        <activity android:name=".ManageAppsActivity" android:exported="false" android:theme="@style/Theme.MyApplication" android:screenOrientation="portrait" />
+        <activity android:name=".ManageAppsActivity" android:exported="false" android:theme="@style/Theme.MyApplication" android:screenOrientation="landscape" />
 </application>
 </manifest>

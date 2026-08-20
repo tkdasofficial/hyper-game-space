@@ -23,6 +23,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import android.content.Intent
 import androidx.compose.ui.Modifier
+import androidx.core.graphics.drawable.toBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.foundation.Image
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -168,9 +171,6 @@ if (games.isEmpty()) {
                                     coroutineScope.launch {
                                         listState.animateScrollToItem(index)
                                     }
-                                    if (!game.isSystemBox) {
-                                        viewModel.toggleGameSelection(game.packageName)
-                                    }
                                 }
                                 .padding(horizontal = 16.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -189,6 +189,11 @@ if (games.isEmpty()) {
                             ) {
                                 if (game.isSystemBox) {
                                     Icon(Icons.Filled.Widgets, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
+                                } else if (game.icon != null) {
+                                    val bitmap = remember(game.packageName) {
+                                        game.icon.toBitmap().asImageBitmap()
+                                    }
+                                    Image(bitmap = bitmap, contentDescription = null, modifier = Modifier.fillMaxSize())
                                 } else {
                                     Icon(Icons.Filled.SportsEsports, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
                                 }
@@ -250,6 +255,11 @@ if (games.isEmpty()) {
                     ) {
                         if (selectedGame?.isSystemBox == true) {
                             Icon(Icons.Filled.Widgets, contentDescription = null, tint = Color.White, modifier = Modifier.size(56.dp))
+                        } else if (selectedGame?.icon != null) {
+                            val bitmap = remember(selectedGame.packageName) {
+                                selectedGame.icon.toBitmap().asImageBitmap()
+                            }
+                            Image(bitmap = bitmap, contentDescription = null, modifier = Modifier.fillMaxSize())
                         } else {
                             Icon(Icons.Filled.SportsEsports, contentDescription = null, tint = Color.White, modifier = Modifier.size(56.dp))
                         }
@@ -270,7 +280,17 @@ if (games.isEmpty()) {
                                 colors = listOf(Color(0xFFD32F2F), Color(0xFFFF5252)) // Premium Red gradient
                             )
                         )
-                        .clickable { },
+                        .clickable {
+                            val selectedGame = games.getOrNull(selectedGameIndex)
+                            selectedGame?.let {
+                                if (!it.isSystemBox) {
+                                    val launchIntent = context.packageManager.getLaunchIntentForPackage(it.packageName)
+                                    if (launchIntent != null) {
+                                        context.startActivity(launchIntent)
+                                    }
+                                }
+                            }
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Text("Play", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold)
@@ -287,12 +307,12 @@ if (games.isEmpty()) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Left Side (Real-Time FPS, RAM, Ping)
+                // Left Side (Stats)
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    StatItem(text = "${metrics.fps}", label = "FPS")
                     StatItem(text = "${metrics.ramPercentage}%", label = "RAM")
-                    StatItem(text = metrics.ping, label = "PING")
+                    StatItem(text = metrics.cpuLoad, label = "CPU")
                     StatItem(text = metrics.gpuLoad, label = "GPU")
+                    StatItem(text = metrics.ping, label = "PING")
                 }
 
                 // Right Side (Add & Settings)

@@ -7,6 +7,9 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.example.util.PermissionManager
 
 class OnboardingActivity : ComponentActivity() {
@@ -14,14 +17,22 @@ class OnboardingActivity : ComponentActivity() {
     private lateinit var tvUsageStatus: TextView
     private lateinit var tvAccessibilityStatus: TextView
     private lateinit var tvBatteryStatus: TextView
+    private lateinit var tvOverlayStatus: TextView
     private lateinit var btnContinue: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
 
         if (PermissionManager.hasUsageAccess(this) && 
             PermissionManager.hasAccessibilityPermission(this) && 
-            PermissionManager.isIgnoringBatteryOptimizations(this)) {
+            PermissionManager.isIgnoringBatteryOptimizations(this) &&
+            PermissionManager.hasOverlayPermission(this)) {
             startActivity(Intent(this, MainActivity::class.java))
             finish()
             return
@@ -32,6 +43,7 @@ class OnboardingActivity : ComponentActivity() {
         tvUsageStatus = findViewById(R.id.tvUsageStatus)
         tvAccessibilityStatus = findViewById(R.id.tvAccessibilityStatus)
         tvBatteryStatus = findViewById(R.id.tvBatteryStatus)
+        tvOverlayStatus = findViewById(R.id.tvOverlayStatus)
         btnContinue = findViewById(R.id.btnContinue)
 
         findViewById<LinearLayout>(R.id.btnUsageAccess).setOnClickListener {
@@ -44,6 +56,10 @@ class OnboardingActivity : ComponentActivity() {
 
         findViewById<LinearLayout>(R.id.btnBattery).setOnClickListener {
             PermissionManager.requestIgnoreBatteryOptimizations(this)
+        }
+
+        findViewById<LinearLayout>(R.id.btnOverlay).setOnClickListener {
+            PermissionManager.requestOverlayPermission(this)
         }
 
         btnContinue.setOnClickListener {
@@ -61,12 +77,14 @@ class OnboardingActivity : ComponentActivity() {
         val hasUsage = PermissionManager.hasUsageAccess(this)
         val hasAccessibility = PermissionManager.hasAccessibilityPermission(this)
         val hasBattery = PermissionManager.isIgnoringBatteryOptimizations(this)
+        val hasOverlay = PermissionManager.hasOverlayPermission(this)
 
         updateStatusText(tvUsageStatus, hasUsage)
         updateStatusText(tvAccessibilityStatus, hasAccessibility)
         updateStatusText(tvBatteryStatus, hasBattery)
+        updateStatusText(tvOverlayStatus, hasOverlay)
 
-        if (hasUsage && hasAccessibility && hasBattery) {
+        if (hasUsage && hasAccessibility && hasBattery && hasOverlay) {
             btnContinue.isEnabled = true
             btnContinue.alpha = 1.0f
         } else {

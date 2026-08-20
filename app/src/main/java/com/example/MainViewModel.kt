@@ -15,14 +15,16 @@ data class MetricsState(
     val fps: Int = 0,
     val ramPercentage: Int = 0,
     val ping: String = "--",
-    val gpuLoad: String = "--"
+    val gpuLoad: String = "--",
+    val cpuLoad: String = "--"
 )
 
 data class GameItem(
     val packageName: String,
     val name: String,
     val isSelected: Boolean,
-    val isSystemBox: Boolean = false
+    val isSystemBox: Boolean = false,
+    val icon: android.graphics.drawable.Drawable? = null
 )
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -46,13 +48,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val ram = metricsCollector.getRamUsagePercentage()
                 val ping = metricsCollector.getPing()
                 val gpu = metricsCollector.getGpuLoadApprox()
+                val cpu = metricsCollector.getCpuLoadApprox()
                 val fps = metricsCollector.getFps()
                 
                 _metricsState.value = MetricsState(
                     fps = fps,
                     ramPercentage = ram,
                     ping = ping,
-                    gpuLoad = gpu
+                    gpuLoad = gpu,
+                    cpuLoad = cpu
                 )
                 delay(1000)
             }
@@ -71,7 +75,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 GameItem(
                     packageName = appInfo.packageName,
                     name = appInfo.loadLabel(pm).toString(),
-                    isSelected = true // they are on dashboard, so considered selected/enabled
+                    isSelected = true, // they are on dashboard, so considered selected/enabled
+                    icon = appInfo.loadIcon(pm)
                 )
             }
             
