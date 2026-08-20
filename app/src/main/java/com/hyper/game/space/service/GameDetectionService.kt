@@ -18,10 +18,23 @@ class GameDetectionService : AccessibilityService(), SharedPreferences.OnSharedP
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        
+        // Explicitly start the service so it transitions to a "started" state.
+        // This ensures START_STICKY and stopWithTask="false" are honored if the app is swiped from recents.
+        try {
+            startService(Intent(applicationContext, GameDetectionService::class.java))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         // Initialize preferences and cache to prevent heavy I/O on window changes
         prefs = applicationContext.getSharedPreferences("hyper_game_space_prefs", Context.MODE_PRIVATE)
         prefs.registerOnSharedPreferenceChangeListener(this)
         cachedGameSet = InstalledGamesManager.getSelectedGames(applicationContext)
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        return START_STICKY
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {

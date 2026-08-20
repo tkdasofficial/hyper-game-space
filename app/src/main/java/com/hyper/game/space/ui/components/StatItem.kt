@@ -19,13 +19,13 @@ import androidx.compose.ui.unit.sp
 fun StatItem(text: String, label: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier
-            .background(Color(0xFF151515), RoundedCornerShape(12.dp))
-            .border(1.dp, Color(0xFF2A2A2A), RoundedCornerShape(12.dp))
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .background(Color(0xFF151515), RoundedCornerShape(8.dp))
+            .border(1.dp, Color(0xFF2A2A2A), RoundedCornerShape(8.dp))
+            .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
-        Text(label, color = Color(0xFFFF5252), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        Text(text, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        Text(label, color = Color(0xFFFF5252), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        Text(text, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
     }
 }

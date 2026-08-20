@@ -314,7 +314,7 @@ if (games.isEmpty()) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Left Side (Stats)
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     StatItem(text = "${metrics.ramPercentage}%", label = "RAM")
                     StatItem(text = metrics.cpuLoad, label = "CPU")
                     StatItem(text = metrics.gpuLoad, label = "GPU")

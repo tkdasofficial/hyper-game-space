@@ -53,6 +53,9 @@ object GameSpaceOverlayManager {
     private var rightTriggerView: View? = null
     private var overlayComposeView: ComposeView? = null
     private var lifecycleOwner: MyLifecycleOwner? = null
+    
+    private var lastLeftSwipeTime = 0L
+    private var lastRightSwipeTime = 0L
 
     @SuppressLint("ClickableViewAccessibility")
     suspend fun showOverlayTrigger(context: Context) = withContext(Dispatchers.Main) {
@@ -61,23 +64,20 @@ object GameSpaceOverlayManager {
         try {
             windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
             
-            // 40dp height (~1cm), 4dp width (~1mm)
             val density = context.resources.displayMetrics.density
             val widthPx = (4 * density).toInt()
-            val heightPx = (40 * density).toInt()
+            val heightPx = (80 * density).toInt() // Made slightly taller for easier invisible touch target
             
             fun createTriggerView(isLeft: Boolean): View {
                 val container = FrameLayout(context)
                 
                 val lineView = View(context).apply {
-                    setBackgroundColor(0x88FFFFFF.toInt()) // Semi-transparent white
-                    // Optional: Rounded corners could be done with a drawable, but simple color is fine
+                    setBackgroundColor(android.graphics.Color.TRANSPARENT) // Invisible trigger
                 }
                 
-                // Add padding area around the thin line to make it easier to touch (e.g., 20dp touch target width)
                 val touchWidth = (20 * density).toInt()
                 container.addView(lineView, FrameLayout.LayoutParams(widthPx, heightPx).apply {
-                    gravity = Gravity.CENTER_VERTICAL or if (isLeft) Gravity.START else Gravity.END
+                    gravity = Gravity.TOP or if (isLeft) Gravity.START else Gravity.END
                 })
 
                 val params = WindowManager.LayoutParams(
@@ -87,7 +87,7 @@ object GameSpaceOverlayManager {
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                     PixelFormat.TRANSLUCENT
                 ).apply {
-                    gravity = Gravity.CENTER_VERTICAL or if (isLeft) Gravity.START else Gravity.END
+                    gravity = Gravity.TOP or if (isLeft) Gravity.START else Gravity.END
                 }
 
                 var initialTouchX = 0f
@@ -98,7 +98,6 @@ object GameSpaceOverlayManager {
                         MotionEvent.ACTION_DOWN -> {
                             initialTouchX = event.rawX
                             moved = false
-                            lineView.setBackgroundColor(0xFFFFFFFF.toInt()) // Solid on touch
                             true
                         }
                         MotionEvent.ACTION_MOVE -> {
@@ -107,15 +106,26 @@ object GameSpaceOverlayManager {
                             val isSwipeInward = if (isLeft) dx > 20 else dx < -20
                             if (isSwipeInward && !moved) {
                                 moved = true
-                                showFullOverlay(context)
+                                val now = System.currentTimeMillis()
+                                if (isLeft) {
+                                    lastLeftSwipeTime = now
+                                    if (now - lastRightSwipeTime <= 1500L) { // 1.5 seconds window for dual swipe
+                                        showFullOverlay(context)
+                                        lastLeftSwipeTime = 0L
+                                        lastRightSwipeTime = 0L
+                                    }
+                                } else {
+                                    lastRightSwipeTime = now
+                                    if (now - lastLeftSwipeTime <= 1500L) {
+                                        showFullOverlay(context)
+                                        lastLeftSwipeTime = 0L
+                                        lastRightSwipeTime = 0L
+                                    }
+                                }
                             }
                             true
                         }
                         MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                            lineView.setBackgroundColor(0x88FFFFFF.toInt()) // Revert transparency
-                            if (!moved && event.action == MotionEvent.ACTION_UP) {
-                                showFullOverlay(context) // Also open on tap
-                            }
                             true
                         }
                         else -> false
