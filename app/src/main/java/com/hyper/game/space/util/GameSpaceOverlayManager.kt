@@ -76,12 +76,12 @@ object GameSpaceOverlayManager {
                 val swipeDistanceThresholdPx = (126 * density).toInt()
 
                 fun createEdgeTrigger(isLeft: Boolean): View {
-                    val container = FrameLayout(context)
+                    val container = FrameLayout(context).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS }
                     val params = WindowManager.LayoutParams(
                         touchThicknessPx,
                         (150 * density).toInt(),
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
-                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                         PixelFormat.TRANSLUCENT
                     ).apply {
                         gravity = Gravity.TOP or if (isLeft) Gravity.START else Gravity.END
@@ -134,7 +134,7 @@ object GameSpaceOverlayManager {
 
             } else if (triggerType == "Floating Icon") {
                 val sizePx = (48 * density).toInt()
-                val container = FrameLayout(context)
+                val container = FrameLayout(context).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS }
                 val iconView = ImageView(context).apply {
                     setImageResource(R.drawable.ic_launcher_foreground) // Fallback icon
                     setBackgroundResource(R.drawable.rounded_icon_bg) // We'll create this if needed, or just set color
@@ -146,7 +146,7 @@ object GameSpaceOverlayManager {
                 val params = WindowManager.LayoutParams(
                     sizePx, sizePx,
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                     PixelFormat.TRANSLUCENT
                 ).apply {
                     gravity = Gravity.TOP or Gravity.START
@@ -200,7 +200,7 @@ object GameSpaceOverlayManager {
                 val touchAreaPx = (32 * density).toInt()
 
                 fun createVisibleEdge(isLeft: Boolean): View {
-                    val container = FrameLayout(context)
+                    val container = FrameLayout(context).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS }
                     val lineView = View(context).apply {
                         val drawable = android.graphics.drawable.GradientDrawable().apply {
                             setColor(0x88FFFFFF.toInt())
@@ -216,7 +216,7 @@ object GameSpaceOverlayManager {
                     val params = WindowManager.LayoutParams(
                         touchAreaPx, lengthPx + (40 * density).toInt(),
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
-                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                         PixelFormat.TRANSLUCENT
                     ).apply {
                         gravity = Gravity.CENTER_VERTICAL or if (isLeft) Gravity.START else Gravity.END
@@ -257,7 +257,7 @@ object GameSpaceOverlayManager {
                 val thicknessPx = (4 * density).toInt()
                 val touchAreaPx = (32 * density).toInt()
 
-                val container = FrameLayout(context)
+                val container = FrameLayout(context).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS }
                 val lineView = View(context).apply {
                     val drawable = android.graphics.drawable.GradientDrawable().apply {
                         setColor(0x88FFFFFF.toInt())
@@ -273,7 +273,7 @@ object GameSpaceOverlayManager {
                 val params = WindowManager.LayoutParams(
                     touchAreaPx, lengthPx + (40 * density).toInt(),
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                     PixelFormat.TRANSLUCENT
                 ).apply {
                     gravity = Gravity.TOP or Gravity.START
@@ -327,6 +327,7 @@ object GameSpaceOverlayManager {
             lifecycleOwner = MyLifecycleOwner()
             
             overlayComposeView = ComposeView(context).apply {
+                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
                 setViewTreeLifecycleOwner(lifecycleOwner)
                 setViewTreeSavedStateRegistryOwner(lifecycleOwner)
                 setViewTreeViewModelStoreOwner(lifecycleOwner)
@@ -342,7 +343,7 @@ object GameSpaceOverlayManager {
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 PixelFormat.TRANSLUCENT
             )
             
