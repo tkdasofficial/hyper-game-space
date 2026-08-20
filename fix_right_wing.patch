@@ -1,0 +1,40 @@
+--- app/src/main/java/com/hyper/game/space/ui/screens/gamespace/GameSpaceOverlay.kt
++++ app/src/main/java/com/hyper/game/space/ui/screens/gamespace/GameSpaceOverlay.kt
+@@ -232,23 +232,23 @@
+     val shape = remember(density) {
+         GenericShape { size, _ ->
+             val offset = with(density) { 60.dp.toPx() }
+-            moveTo(offset, 0f)
++            moveTo(0f, 0f)
+             lineTo(size.width, 0f)
+             lineTo(size.width, size.height)
+-            lineTo(0f, size.height)
++            lineTo(offset, size.height)
+             close()
+         }
+     }
+ 
+     Box(
+         modifier = modifier
+             .drawWithCache {
+                 val offset = 60.dp.toPx()
+                 val path = Path().apply {
+-                    moveTo(offset, 0f)
++                    moveTo(0f, 0f)
+                     lineTo(size.width, 0f)
+                     lineTo(size.width, size.height)
+-                    lineTo(0f, size.height)
++                    lineTo(offset, size.height)
+                     close()
+                 }
+                 onDrawBehind {
+                     drawPath(path, DarkGlass)
+                     drawLine(
+                         color = NeonRed,
+-                        start = Offset(offset, 0f),
+-                        end = Offset(0f, size.height),
++                        start = Offset(0f, 0f),
++                        end = Offset(offset, size.height),
+                         strokeWidth = 2.dp.toPx()
+                     )
+                 }
