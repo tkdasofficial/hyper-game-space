@@ -33,7 +33,7 @@ object SystemIntegrationController {
             }
             
             // 4. Visual Overlays
-            DynamicCrosshairManager.showCrosshair(context, DynamicCrosshairManager.CrosshairConfig())
+            // DynamicCrosshairManager.showCrosshair(context, DynamicCrosshairManager.CrosshairConfig())
             
             val profile = when(SettingsManager.getColorProfile(context)) {
                 "GRASS_SPOTTER" -> VisionColorOverlayService.Profile.GRASS_SPOTTER
@@ -41,12 +41,14 @@ object SystemIntegrationController {
                 "SHADOW_BOOST" -> VisionColorOverlayService.Profile.SHADOW_BOOST
                 else -> VisionColorOverlayService.Profile.NONE
             }
-            VisionColorOverlayService.applyFilter(context, profile)
+            if (profile != VisionColorOverlayService.Profile.NONE) {
+                VisionColorOverlayService.applyFilter(context, profile)
+            }
 
-            // 5. Virtual Sensitivity Engine
-            VirtualSensitivityEngine.xAxisMultiplier = SettingsManager.getVirtualSensitivityX(context)
-            VirtualSensitivityEngine.yAxisMultiplier = SettingsManager.getVirtualSensitivityY(context)
-            VirtualSensitivityEngine.startEngine(context, service)
+            // 5. Virtual Sensitivity Engine (Disabled by default to prevent global touch blocking)
+            // VirtualSensitivityEngine.xAxisMultiplier = SettingsManager.getVirtualSensitivityX(context)
+            // VirtualSensitivityEngine.yAxisMultiplier = SettingsManager.getVirtualSensitivityY(context)
+            // VirtualSensitivityEngine.startEngine(context, service)
 
             // 6. Hardware Triggers & Macro initialization
             HardwareTriggerMapper.isTriggerEngineActive = true
@@ -55,7 +57,9 @@ object SystemIntegrationController {
             HardwareTriggerMapper.mapKey(KeyEvent.KEYCODE_VOLUME_UP, 500f, 500f)
             HardwareTriggerMapper.mapKey(KeyEvent.KEYCODE_VOLUME_DOWN, 800f, 600f)
 
-            // 7. Start Persistent Notification Service
+            // 7. Start Persistent Notification Service & Floating Trigger
+            GameSpaceOverlayManager.showOverlayTrigger(context)
+            
             val intent = Intent(context, GameSpaceNotificationService::class.java).apply {
                 putExtra("package_name", packageName)
             }
@@ -93,7 +97,9 @@ object SystemIntegrationController {
             // Release Audio Resources
             AudioEngineController.disableAudioEffects()
 
-            // Stop Notification Service
+            // Stop Notification Service & Hide Trigger
+            GameSpaceOverlayManager.hideOverlay()
+            
             try {
                 val intent = Intent(context, GameSpaceNotificationService::class.java)
                 context.stopService(intent)
