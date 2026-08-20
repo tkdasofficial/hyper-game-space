@@ -22,6 +22,12 @@ object InstalledGamesManager {
 
     fun saveSelectedGames(context: Context, games: Set<String>) {
         getPrefs(context).edit().putStringSet(KEY_SELECTED_GAMES, games).apply()
+        
+        // Notify the accessibility service (which runs in a separate process)
+        val intent = Intent("com.hyper.game.space.UPDATE_GAMES")
+        intent.putStringArrayListExtra("games", ArrayList(games))
+        intent.setPackage(context.packageName)
+        context.sendBroadcast(intent)
     }
 
     fun addSelectedGame(context: Context, packageName: String) {

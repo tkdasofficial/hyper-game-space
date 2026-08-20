@@ -10,26 +10,46 @@ import com.hyper.game.space.util.HardwareTriggerMapper
 import com.hyper.game.space.util.InstalledGamesManager
 import com.hyper.game.space.util.SystemIntegrationController
 
-class GameDetectionService : AccessibilityService(), SharedPreferences.OnSharedPreferenceChangeListener {
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+
+class GameDetectionService : AccessibilityService() {
 
     private var currentPackage: String? = null
     private var cachedGameSet: Set<String> = emptySet()
-    private lateinit var prefs: SharedPreferences
+
+
+    private val updateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == "com.hyper.game.space.UPDATE_GAMES") {
+                val updatedGames = intent.getStringArrayListExtra("games")
+                if (updatedGames != null) {
+                    cachedGameSet = updatedGames.toSet()
+                } else {
+                    cachedGameSet = InstalledGamesManager.getSelectedGames(applicationContext)
+                }
+            }
+        }
+    }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         
-        // Explicitly start the service so it transitions to a "started" state.
-        // This ensures START_STICKY and stopWithTask="false" are honored if the app is swiped from recents.
         try {
             startService(Intent(applicationContext, GameDetectionService::class.java))
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
-        // Initialize preferences and cache to prevent heavy I/O on window changes
-        prefs = applicationContext.getSharedPreferences("hyper_game_space_prefs", Context.MODE_PRIVATE)
-        prefs.registerOnSharedPreferenceChangeListener(this)
+        // Register BroadcastReceiver for cross-process updates
+        val filter = IntentFilter("com.hyper.game.space.UPDATE_GAMES")
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(updateReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(updateReceiver, filter)
+        }
+
+        // Load initially
         cachedGameSet = InstalledGamesManager.getSelectedGames(applicationContext)
     }
 
@@ -37,11 +57,7 @@ class GameDetectionService : AccessibilityService(), SharedPreferences.OnSharedP
         return START_STICKY
     }
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-        if (key == "selected_games") {
-            cachedGameSet = InstalledGamesManager.getSelectedGames(applicationContext)
-        }
-    }
+
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null || event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
@@ -80,8 +96,10 @@ class GameDetectionService : AccessibilityService(), SharedPreferences.OnSharedP
 
     override fun onDestroy() {
         super.onDestroy()
-        if (::prefs.isInitialized) {
-            prefs.unregisterOnSharedPreferenceChangeListener(this)
+        try {
+            unregisterReceiver(updateReceiver)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
         SystemIntegrationController.onGameExited(applicationContext, this)
     }
