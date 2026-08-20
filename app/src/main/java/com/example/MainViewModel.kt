@@ -22,7 +22,7 @@ data class GameItem(
     val packageName: String,
     val name: String,
     val isSelected: Boolean,
-    val isSystemBox: Boolean = false // Using false by default for actual games
+    val isSystemBox: Boolean = false
 )
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -47,45 +47,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val ping = metricsCollector.getPing()
                 val gpu = metricsCollector.getGpuLoadApprox()
                 val fps = metricsCollector.getFps()
-
+                
                 _metricsState.value = MetricsState(
                     fps = fps,
                     ramPercentage = ram,
                     ping = ping,
                     gpuLoad = gpu
                 )
-                // Optimize UI loop: Refresh every 1000ms (1Hz) to save battery
                 delay(1000)
             }
         }
     }
 
-    private fun loadGames() {
-        val context = getApplication<Application>()
-        val pm = context.packageManager
-        
-        // Ensure system box is always there
-        val systemBox = GameItem(
-            packageName = "com.example.systembox",
-            name = "Gamebox",
-            isSelected = true,
-            isSystemBox = true
-        )
-
-        val allGames = InstalledGamesManager.getInstalledGames(context)
-        val selected = InstalledGamesManager.getSelectedGames(context)
-
-        val mapped = allGames.map { appInfo ->
-            GameItem(
-                packageName = appInfo.packageName,
-                name = appInfo.loadLabel(pm).toString(),
-                isSelected = selected.contains(appInfo.packageName)
-            )
+    fun loadGames() {
+        viewModelScope.launch {
+            val context = getApplication<Application>()
+            val pm = context.packageManager
+            
+            val dashboardApps = InstalledGamesManager.getDashboardApps(context)
+            val selected = InstalledGamesManager.getSelectedGames(context)
+            
+            val mapped = dashboardApps.map { appInfo ->
+                GameItem(
+                    packageName = appInfo.packageName,
+                    name = appInfo.loadLabel(pm).toString(),
+                    isSelected = true // they are on dashboard, so considered selected/enabled
+                )
+            }
+            
+            _installedGames.value = mapped
         }
-        
-        _installedGames.value = listOf(systemBox) + mapped
     }
 
+    
     fun toggleGameSelection(packageName: String) {
         if (packageName == "com.example.systembox") return // Prevent toggling the default box
         
@@ -102,7 +96,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         loadGames() // Refresh UI
     }
 
-    override fun onCleared() {
+    override fun onCleared()
+ {
         super.onCleared()
         metricsCollector.stopFpsMonitor()
     }

@@ -21,7 +21,11 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import android.content.Intent
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -45,6 +49,7 @@ import com.example.ui.screens.SettingsScreen
 import com.example.ui.theme.MyApplicationTheme
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 class MainActivity : ComponentActivity() {
@@ -72,6 +77,20 @@ fun HyperGameSpaceApp(viewModel: MainViewModel = viewModel()) {
     var selectedGameIndex by remember { mutableIntStateOf(0) }
     var showSettings by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.loadGames()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     if (showSettings) {
         SettingsScreen(onBack = { showSettings = false })
         return
@@ -87,10 +106,12 @@ fun HyperGameSpaceApp(viewModel: MainViewModel = viewModel()) {
                 .padding(innerPadding)
         ) {
             // Main Content Row
-            Row(
-                modifier = Modifier.fillMaxSize(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+if (games.isEmpty()) {
+ androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+ androidx.compose.material3.Text("No Games Added", color = androidx.compose.ui.graphics.Color.White, fontSize = 24.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+ }
+ } else { 
+ Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) { 
                 // Left Column: Game List (Dialer Picker)
                 val itemHeight = 88.dp
                 val listState = rememberLazyListState(initialFirstVisibleItemIndex = 0)
@@ -253,7 +274,8 @@ fun HyperGameSpaceApp(viewModel: MainViewModel = viewModel()) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text("Play", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold)
-                }
+                } }
+
             }
 
             // Top Bar
@@ -275,7 +297,7 @@ fun HyperGameSpaceApp(viewModel: MainViewModel = viewModel()) {
 
                 // Right Side (Add & Settings)
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = { context.startActivity(Intent(context, ManageAppsActivity::class.java)) }) {
                         Icon(Icons.Filled.Add, contentDescription = "Add", tint = Color.White, modifier = Modifier.size(32.dp))
                     }
                     IconButton(onClick = { showSettings = true }) {

@@ -1,9 +1,12 @@
 package com.example.util
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object InstalledGamesManager {
     private const val PREFS_NAME = "hyper_game_space_prefs"
@@ -33,23 +36,36 @@ object InstalledGamesManager {
         saveSelectedGames(context, current)
     }
 
-    fun getInstalledGames(context: Context): List<ApplicationInfo> {
-        val pm = context.packageManager
-        
-        // Retrieve all applications
-        val allApps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
-        
-        // Filter out system apps, or selectively include categorised games
-        return allApps.filter { appInfo ->
-            val isUserApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0
-            val isGameCategory = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                appInfo.category == ApplicationInfo.CATEGORY_GAME
-            } else {
-                @Suppress("DEPRECATION")
-                (appInfo.flags and ApplicationInfo.FLAG_IS_GAME) != 0
-            }
-            
-            isUserApp || isGameCategory
+    fun isGame(appInfo: ApplicationInfo): Boolean {
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            appInfo.category == ApplicationInfo.CATEGORY_GAME
+        } else {
+            @Suppress("DEPRECATION")
+            (appInfo.flags and ApplicationInfo.FLAG_IS_GAME) != 0
         }
+    }
+
+    suspend fun getDashboardApps(context: Context): List<ApplicationInfo> = withContext(Dispatchers.IO) {
+        val pm = context.packageManager
+        val selectedGames = getSelectedGames(context)
+
+        val intent = Intent(Intent.ACTION_MAIN, null).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+        val resolveInfos = pm.queryIntentActivities(intent, PackageManager.GET_META_DATA)
+        val launcherApps = resolveInfos.map { it.activityInfo.applicationInfo }.distinctBy { it.packageName }
+        
+        launcherApps.filter { appInfo ->
+            isGame(appInfo) || selectedGames.contains(appInfo.packageName)
+        }
+    }
+
+    suspend fun getAllLauncherApps(context: Context): List<ApplicationInfo> = withContext(Dispatchers.IO) {
+        val pm = context.packageManager
+        val intent = Intent(Intent.ACTION_MAIN, null).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+        val resolveInfos = pm.queryIntentActivities(intent, PackageManager.GET_META_DATA)
+        resolveInfos.map { it.activityInfo.applicationInfo }.distinctBy { it.packageName }
     }
 }
