@@ -34,4 +34,8 @@ object SettingsManager {
     // Audio
     fun getFootstepEQ(context: Context): Boolean = getPrefs(context).getBoolean("footstep_eq", false)
     fun setFootstepEQ(context: Context, value: Boolean) = getPrefs(context).edit().putBoolean("footstep_eq", value).apply()
+    
+    // Toolbox Trigger
+    fun getToolboxTriggerType(context: Context): String = getPrefs(context).getString("toolbox_trigger", "Single Finger Swipe (Left Center)") ?: "Single Finger Swipe (Left Center)"
+    fun setToolboxTriggerType(context: Context, value: String) = getPrefs(context).edit().putString("toolbox_trigger", value).apply()
 }

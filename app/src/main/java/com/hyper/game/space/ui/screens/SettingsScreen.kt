@@ -24,6 +24,7 @@ import android.content.Context
 import com.hyper.game.space.util.SettingsManager
 
 val categories = listOf(
+    "Toolbox Trigger Configuration",
     "Performance Mode",
     "Virtual Sensitivity",
     "Graphics Driver & Display",
@@ -103,6 +104,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                     .padding(24.dp)
             ) {
                 when (selectedCategory) {
+                    "Toolbox Trigger Configuration" -> ToolboxTriggerSettings()
                     "Performance Mode" -> PerformanceModeSettings()
                     "Virtual Sensitivity" -> VirtualSensitivitySettings()
                     "Graphics Driver & Display" -> GraphicsSettings()
@@ -486,5 +488,27 @@ fun VoiceChangerSettings() {
         SliderSetting("Pitch Adjustment", pitch, -5f..5f, { pitch = it }, formatValue = { String.format("%.1f", it) })
         
         SwitchSetting("Mic Monitor & Preview", "Live test buffer", monitor) { monitor = it }
+    }
+}
+
+@Composable
+fun ToolboxTriggerSettings(context: Context = androidx.compose.ui.platform.LocalContext.current) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        var trigger by remember { mutableStateOf(SettingsManager.getToolboxTriggerType(context)) }
+        val triggerTypes = listOf(
+            "Floating Icon",
+            "Single Finger Swipe (Left Center)",
+            "2 Fingers Swipe (Top Corners)",
+            "Dual Edge Swipe (Sides)"
+        )
+        
+        DropdownSetting(
+            "Opening Method",
+            triggerTypes,
+            trigger
+        ) { 
+            trigger = it
+            SettingsManager.setToolboxTriggerType(context, it)
+        }
     }
 }

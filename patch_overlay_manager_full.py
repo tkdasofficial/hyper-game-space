@@ -1,68 +1,12 @@
-package com.hyper.game.space.util
+import re
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.graphics.PixelFormat
-import android.os.Build
-import android.view.Gravity
-import android.view.MotionEvent
-import android.view.View
-import android.view.WindowManager
-import android.widget.FrameLayout
-import android.widget.ImageView
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleRegistry
-import androidx.lifecycle.ViewModelStore
-import androidx.lifecycle.ViewModelStoreOwner
-import androidx.lifecycle.setViewTreeViewModelStoreOwner
-import androidx.lifecycle.setViewTreeLifecycleOwner
-import androidx.savedstate.SavedStateRegistry
-import androidx.savedstate.SavedStateRegistryController
-import androidx.savedstate.SavedStateRegistryOwner
-import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import com.hyper.game.space.R
-import com.hyper.game.space.ui.screens.gamespace.GameSpaceOverlayLayout
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+with open('app/src/main/java/com/hyper/game/space/util/GameSpaceOverlayManager.kt', 'r') as f:
+    content = f.read()
 
-class MyLifecycleOwner : SavedStateRegistryOwner, ViewModelStoreOwner {
-    private val store = ViewModelStore()
-    override val viewModelStore: ViewModelStore get() = store
-    private val lifecycleRegistry = LifecycleRegistry(this)
-    private val savedStateRegistryController = SavedStateRegistryController.create(this)
+# Replace singleTriggerView with triggerViews
+content = content.replace('private var singleTriggerView: View? = null', 'private var triggerViews: MutableList<View> = mutableListOf()\n    private var lastLeftSwipeTime = 0L\n    private var lastRightSwipeTime = 0L')
 
-    init {
-        savedStateRegistryController.performRestore(null)
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
-    }
-
-    override val lifecycle: Lifecycle
-        get() = lifecycleRegistry
-
-    override val savedStateRegistry: SavedStateRegistry
-        get() = savedStateRegistryController.savedStateRegistry
-        
-    fun stop() {
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    }
-}
-
-object GameSpaceOverlayManager {
-    private var windowManager: WindowManager? = null
-    private var triggerViews: MutableList<View> = mutableListOf()
-    private var lastLeftSwipeTime = 0L
-    private var lastRightSwipeTime = 0L
-    private var overlayComposeView: ComposeView? = null
-    private var lifecycleOwner: MyLifecycleOwner? = null
-    
-    
-
-    @SuppressLint("ClickableViewAccessibility")
+show_overlay_func = """    @SuppressLint("ClickableViewAccessibility")
     suspend fun showOverlayTrigger(context: Context) = withContext(Dispatchers.Main) {
         if (triggerViews.isNotEmpty()) return@withContext
         try {
@@ -318,56 +262,15 @@ object GameSpaceOverlayManager {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-    }
+    }"""
+content = re.sub(r'    @SuppressLint\("ClickableViewAccessibility"\)\n    suspend fun showOverlayTrigger.*?(?=    private fun showFullOverlay)', show_overlay_func + '\n\n', content, flags=re.DOTALL)
 
-    private fun showFullOverlay(context: Context) {
-        if (overlayComposeView != null) return
-        
-        try {
-            lifecycleOwner = MyLifecycleOwner()
-            
-            overlayComposeView = ComposeView(context).apply {
-                setViewTreeLifecycleOwner(lifecycleOwner)
-                setViewTreeSavedStateRegistryOwner(lifecycleOwner)
-                setViewTreeViewModelStoreOwner(lifecycleOwner)
-                setContent {
-                    GameSpaceOverlayLayout(
-                        isVisible = true,
-                        onClose = { hideFullOverlay() }
-                    )
-                }
-            }
-            
-            val params = WindowManager.LayoutParams(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.MATCH_PARENT,
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-                PixelFormat.TRANSLUCENT
-            )
-            
-            windowManager?.addView(overlayComposeView, params)
-            triggerViews.forEach { it.visibility = View.GONE }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-    
-    private fun hideFullOverlay() {
-        try {
-            overlayComposeView?.let {
-                windowManager?.removeView(it)
-            }
-            lifecycleOwner?.stop()
-            overlayComposeView = null
-            lifecycleOwner = null
-            triggerViews.forEach { it.visibility = View.VISIBLE }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-    
-    suspend fun hideOverlay() = withContext(Dispatchers.Main) {
+# Modify visibility updates
+content = content.replace('singleTriggerView?.visibility = View.GONE', 'triggerViews.forEach { it.visibility = View.GONE }')
+content = content.replace('singleTriggerView?.visibility = View.VISIBLE', 'triggerViews.forEach { it.visibility = View.VISIBLE }')
+
+# Modify hideOverlay
+hide_overlay_func = """    suspend fun hideOverlay() = withContext(Dispatchers.Main) {
         try {
             hideFullOverlay()
             triggerViews.forEach { view ->
@@ -377,5 +280,8 @@ object GameSpaceOverlayManager {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-    }
-}
+    }"""
+content = re.sub(r'    suspend fun hideOverlay.*\}', hide_overlay_func + '\n}', content, flags=re.DOTALL)
+
+with open('app/src/main/java/com/hyper/game/space/util/GameSpaceOverlayManager.kt', 'w') as f:
+    f.write(content)
